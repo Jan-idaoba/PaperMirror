@@ -3,18 +3,18 @@
 #include <Windows.h>
 #include <mutex>
 
-#include "PrintAssitWndApi.h"
-#include "PAGridRenderer.h"
-#include "PAMonitorRegistry.h"
+#include "PaperMirrorApi.h"
+#include "PMGridRenderer.h"
+#include "PMMonitorRegistry.h"
 
-class PAOverlayWindow
+class PMOverlayWindow
 {
 public:
-    PAOverlayWindow();
-    ~PAOverlayWindow();
+    PMOverlayWindow();
+    ~PMOverlayWindow();
 
-    bool Create(const PA_WindowParams& params, const PAMonitorEntry& entry);
-    void Modify(const PA_WindowParams& params);
+    bool Create(const PM_WindowParams& params, const PMMonitorEntry& entry);
+    void Modify(const PM_WindowParams& params);
     void AdaptToMonitor(HMONITOR hMon);
     void Close();
 
@@ -37,15 +37,15 @@ private:
 
 private:
     HWND               m_hWnd;
-    PA_WindowParams    m_params;
-    PAMonitorEntry     m_entry;
+    PM_WindowParams    m_params;
+    PMMonitorEntry     m_entry;
     HMONITOR           m_hMonLastAdapted;
 
     bool  m_bDragging;
     POINT m_ptDragStart;
     POINT m_ptPaperOffset;
 
-    PAButtonRects m_btnRects;
+    PMButtonRects m_btnRects;
     int   m_iTabIndex;
 
     bool  m_bHighContrast;
@@ -53,20 +53,20 @@ private:
 
     static const UINT_PTR TIMER_HIGH_CONTRAST = 1;
     static const UINT HIGH_CONTRAST_INTERVAL = 2000;
-    static constexpr const wchar_t* WINDOW_CLASS_NAME = L"PAOverlayWindowClass";
+    static constexpr const wchar_t* WINDOW_CLASS_NAME = L"PMOverlayWindowClass";
 };
 
-class PAWindowRegistry
+class PMWindowRegistry
 {
 public:
-    static PAWindowRegistry& GetInstance();
+    static PMWindowRegistry& GetInstance();
 
-    PAOverlayWindow* Get();
-    void Set(PAOverlayWindow* pWnd);
+    PMOverlayWindow* Get();
+    void Set(PMOverlayWindow* pWnd);
     void CloseAndClear();
     void Clear();
 
 private:
-    PAOverlayWindow* m_window = nullptr;
+    PMOverlayWindow* m_window = nullptr;
     std::mutex m_mutex;
 };

@@ -5,9 +5,9 @@
 #include <vector>
 #include <mutex>
 
-#include "PrintAssitWndApi.h"
+#include "PaperMirrorApi.h"
 
-struct PAMonitorEntry
+struct PMMonitorEntry
 {
     int          index;
     HMONITOR     hMonitor;
@@ -18,10 +18,10 @@ struct PAMonitorEntry
     std::wstring deviceName;
 };
 
-class PAMonitorRegistry
+class PMMonitorRegistry
 {
 public:
-    static PAMonitorRegistry& GetInstance();
+    static PMMonitorRegistry& GetInstance();
 
     // Refreshes the cached monitor list. Must be called on the UI thread,
     // either at init time or in response to WM_DISPLAYCHANGE.
@@ -29,14 +29,14 @@ public:
 
     // Read accessors — safe from any thread.
     int  GetMonitorCount() const;
-    bool GetEntry(int index, PAMonitorEntry* out) const;
-    bool GetPrimaryEntry(PAMonitorEntry* out) const;
+    bool GetEntry(int index, PMMonitorEntry* out) const;
+    bool GetPrimaryEntry(PMMonitorEntry* out) const;
 
 private:
-    PAMonitorRegistry() = default;
+    PMMonitorRegistry() = default;
 
     static BOOL CALLBACK MonitorEnumProc(HMONITOR hMon, HDC hdc, LPRECT rc, LPARAM lParam);
 
     mutable std::mutex          m_mutex;
-    std::vector<PAMonitorEntry> m_entries;
+    std::vector<PMMonitorEntry> m_entries;
 };

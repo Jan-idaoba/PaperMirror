@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <shellscalingapi.h>
 
-class PADpiHelper
+class PMDpiHelper
 {
 public:
     static float GetScaleForMonitor(HMONITOR hMonitor);

@@ -1,20 +1,20 @@
 #include "pch.h"
-#include "PAMonitorRegistry.h"
+#include "PMMonitorRegistry.h"
 
 #include <shellscalingapi.h>
 
 #pragma comment(lib, "shcore.lib")
 #pragma comment(lib, "user32.lib")
 
-PAMonitorRegistry& PAMonitorRegistry::GetInstance()
+PMMonitorRegistry& PMMonitorRegistry::GetInstance()
 {
-    static PAMonitorRegistry instance;
+    static PMMonitorRegistry instance;
     return instance;
 }
 
-BOOL CALLBACK PAMonitorRegistry::MonitorEnumProc(HMONITOR hMon, HDC, LPRECT, LPARAM lParam)
+BOOL CALLBACK PMMonitorRegistry::MonitorEnumProc(HMONITOR hMon, HDC, LPRECT, LPARAM lParam)
 {
-    auto* entries = reinterpret_cast<std::vector<PAMonitorEntry>*>(lParam);
+    auto* entries = reinterpret_cast<std::vector<PMMonitorEntry>*>(lParam);
 
     MONITORINFOEXW mi{};
     mi.cbSize = sizeof(mi);
@@ -30,7 +30,7 @@ BOOL CALLBACK PAMonitorRegistry::MonitorEnumProc(HMONITOR hMon, HDC, LPRECT, LPA
     // lives in logical pixels, so using RAW_DPI makes the paper ~scale% too large.
     GetDpiForMonitor(hMon, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
 
-    PAMonitorEntry e;
+    PMMonitorEntry e;
     e.index      = static_cast<int>(entries->size());
     e.hMonitor   = hMon;
     e.rect       = mi.rcMonitor;
@@ -42,22 +42,22 @@ BOOL CALLBACK PAMonitorRegistry::MonitorEnumProc(HMONITOR hMon, HDC, LPRECT, LPA
     return TRUE;
 }
 
-void PAMonitorRegistry::Refresh()
+void PMMonitorRegistry::Refresh()
 {
-    std::vector<PAMonitorEntry> fresh;
+    std::vector<PMMonitorEntry> fresh;
     EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, reinterpret_cast<LPARAM>(&fresh));
 
     std::lock_guard<std::mutex> lock(m_mutex);
     m_entries = std::move(fresh);
 }
 
-int PAMonitorRegistry::GetMonitorCount() const
+int PMMonitorRegistry::GetMonitorCount() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return static_cast<int>(m_entries.size());
 }
 
-bool PAMonitorRegistry::GetEntry(int index, PAMonitorEntry* out) const
+bool PMMonitorRegistry::GetEntry(int index, PMMonitorEntry* out) const
 {
     if (!out) return false;
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -67,7 +67,7 @@ bool PAMonitorRegistry::GetEntry(int index, PAMonitorEntry* out) const
     return true;
 }
 
-bool PAMonitorRegistry::GetPrimaryEntry(PAMonitorEntry* out) const
+bool PMMonitorRegistry::GetPrimaryEntry(PMMonitorEntry* out) const
 {
     if (!out) return false;
     std::lock_guard<std::mutex> lock(m_mutex);

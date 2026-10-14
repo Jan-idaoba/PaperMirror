@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "PAGridRenderer.h"
-#include "PALanguage.h"
+#include "PMGridRenderer.h"
+#include "PMLanguage.h"
 
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "msimg32.lib")
@@ -21,27 +21,27 @@ namespace
 {
     struct PaperSpec
     {
-        PA_PaperType type;
+        PM_PaperType type;
         double       widthMm;
         double       heightMm;
     };
 
     static const PaperSpec kPaperSpecs[] = {
         // Outline mode
-        { PA_PAPER_A4,        210.0, 297.0 },
-        { PA_PAPER_A3,        297.0, 420.0 },
-        { PA_PAPER_A5,        148.0, 210.0 },
-        { PA_PAPER_B5,        176.0, 250.0 },
-        { PA_PAPER_LETTER,    215.9, 279.4 },
-        { PA_PAPER_LEGAL,     215.9, 355.6 },
+        { PM_PAPER_A4,        210.0, 297.0 },
+        { PM_PAPER_A3,        297.0, 420.0 },
+        { PM_PAPER_A5,        148.0, 210.0 },
+        { PM_PAPER_B5,        176.0, 250.0 },
+        { PM_PAPER_LETTER,    215.9, 279.4 },
+        { PM_PAPER_LEGAL,     215.9, 355.6 },
         // Grid mode (cell size)
-        { PA_PAPER_GRID_5MM,  5.0,   5.0   },
-        { PA_PAPER_GRID_1CM,  10.0,  10.0  },
-        { PA_PAPER_GRID_2CM,  20.0,  20.0  },
-        { PA_PAPER_GRID_1IN,  25.4,  25.4  },
+        { PM_PAPER_GRID_5MM,  5.0,   5.0   },
+        { PM_PAPER_GRID_1CM,  10.0,  10.0  },
+        { PM_PAPER_GRID_2CM,  20.0,  20.0  },
+        { PM_PAPER_GRID_1IN,  25.4,  25.4  },
     };
 
-    static bool LookupPaperSpec(PA_PaperType type, double* w, double* h)
+    static bool LookupPaperSpec(PM_PaperType type, double* w, double* h)
     {
         for (const auto& s : kPaperSpecs)
         {
@@ -56,17 +56,17 @@ namespace
     }
 }
 
-bool PAGridRenderer::IsFullScreenMode(PA_PaperType type)
+bool PMGridRenderer::IsFullScreenMode(PM_PaperType type)
 {
-    return (type >= 100 && type < 200) || type == PA_PAPER_CUSTOM_GRID;
+    return (type >= 100 && type < 200) || type == PM_PAPER_CUSTOM_GRID;
 }
 
-void PAGridRenderer::GetPaperSizeMm(const PA_WindowParams& params,
+void PMGridRenderer::GetPaperSizeMm(const PM_WindowParams& params,
                                      double* outWidthMm,
                                      double* outHeightMm)
 {
-    if (params.paperType == PA_PAPER_CUSTOM_OUTLINE ||
-        params.paperType == PA_PAPER_CUSTOM_GRID)
+    if (params.paperType == PM_PAPER_CUSTOM_OUTLINE ||
+        params.paperType == PM_PAPER_CUSTOM_GRID)
     {
         *outWidthMm  = params.paperWidthMm  > 0 ? params.paperWidthMm  : 210.0;
         *outHeightMm = params.paperHeightMm > 0 ? params.paperHeightMm : 297.0;
@@ -85,7 +85,7 @@ void PAGridRenderer::GetPaperSizeMm(const PA_WindowParams& params,
 // Pixel helpers
 // ============================================================================
 
-void PAGridRenderer::PA_SetPixel(BYTE* pBits, int stride, int imgHeight,
+void PMGridRenderer::PM_SetPixel(BYTE* pBits, int stride, int imgHeight,
                                   int x, int y,
                                   BYTE r, BYTE g, BYTE b, BYTE a)
 {
@@ -99,7 +99,7 @@ void PAGridRenderer::PA_SetPixel(BYTE* pBits, int stride, int imgHeight,
     px[3] = a;
 }
 
-void PAGridRenderer::PA_FillRect(BYTE* pBits, int stride, int imgHeight,
+void PMGridRenderer::PM_FillRect(BYTE* pBits, int stride, int imgHeight,
                                   int x, int y, int w, int h,
                                   BYTE r, BYTE g, BYTE b, BYTE a)
 {
@@ -134,7 +134,7 @@ void PAGridRenderer::PA_FillRect(BYTE* pBits, int stride, int imgHeight,
     }
 }
 
-void PAGridRenderer::PA_DrawHLine(BYTE* pBits, int stride, int imgHeight,
+void PMGridRenderer::PM_DrawHLine(BYTE* pBits, int stride, int imgHeight,
                                    int x, int y, int length,
                                    BYTE r, BYTE g, BYTE b, BYTE a)
 {
@@ -165,7 +165,7 @@ void PAGridRenderer::PA_DrawHLine(BYTE* pBits, int stride, int imgHeight,
     }
 }
 
-void PAGridRenderer::PA_DrawVLine(BYTE* pBits, int stride, int imgHeight,
+void PMGridRenderer::PM_DrawVLine(BYTE* pBits, int stride, int imgHeight,
                                    int x, int y, int length,
                                    BYTE r, BYTE g, BYTE b, BYTE a)
 {
@@ -195,20 +195,20 @@ void PAGridRenderer::PA_DrawVLine(BYTE* pBits, int stride, int imgHeight,
     }
 }
 
-void PAGridRenderer::PA_DrawRect(BYTE* pBits, int stride, int imgHeight,
+void PMGridRenderer::PM_DrawRect(BYTE* pBits, int stride, int imgHeight,
                                   int x, int y, int w, int h,
                                   BYTE r, BYTE g, BYTE b, BYTE a, int thickness)
 {
     for (int t = 0; t < thickness; t++)
     {
-        PA_DrawHLine(pBits, stride, imgHeight, x, y + t, w, r, g, b, a);
-        PA_DrawHLine(pBits, stride, imgHeight, x, y + h - 1 - t, w, r, g, b, a);
-        PA_DrawVLine(pBits, stride, imgHeight, x + t, y, h, r, g, b, a);
-        PA_DrawVLine(pBits, stride, imgHeight, x + w - 1 - t, y, h, r, g, b, a);
+        PM_DrawHLine(pBits, stride, imgHeight, x, y + t, w, r, g, b, a);
+        PM_DrawHLine(pBits, stride, imgHeight, x, y + h - 1 - t, w, r, g, b, a);
+        PM_DrawVLine(pBits, stride, imgHeight, x + t, y, h, r, g, b, a);
+        PM_DrawVLine(pBits, stride, imgHeight, x + w - 1 - t, y, h, r, g, b, a);
     }
 }
 
-void PAGridRenderer::PA_DrawTextOnBitmap(BYTE* pBits, int bmpWidth, int bmpHeight,
+void PMGridRenderer::PM_DrawTextOnBitmap(BYTE* pBits, int bmpWidth, int bmpHeight,
                                           const RECT& rc, const wchar_t* text,
                                           COLORREF color, int fontSize, float dpiScale)
 {
@@ -304,21 +304,21 @@ void PAGridRenderer::PA_DrawTextOnBitmap(BYTE* pBits, int bmpWidth, int bmpHeigh
     ReleaseDC(NULL, hScreenDC);
 }
 
-void PAGridRenderer::DrawButtons(BYTE* pBits, int width, int height,
+void PMGridRenderer::DrawButtons(BYTE* pBits, int width, int height,
                                   int btnX, int btnY,
                                   bool showFullScreenBtn,
                                   int tabIndex,
                                   bool highContrast,
                                   float dpiScale,
-                                  PAButtonRects& outBtnRects)
+                                  PMButtonRects& outBtnRects)
 {
     int scaledBtnW = (int)(BTN_WIDTH * dpiScale);
     int scaledBtnH = (int)(BTN_HEIGHT * dpiScale);
     int scaledMargin = (int)(BTN_MARGIN * dpiScale);
     int stride = width * 4;
 
-    const wchar_t* closeText = PALanguage::GetInstance().Translate("Close");
-    const wchar_t* fullScreenText = PALanguage::GetInstance().Translate("FullScreen");
+    const wchar_t* closeText = PMLanguage::GetInstance().Translate("Close");
+    const wchar_t* fullScreenText = PMLanguage::GetInstance().Translate("FullScreen");
 
     BYTE btnBgR = 0x33, btnBgG = 0x33, btnBgB = 0x33, btnBgA = 200;
     BYTE btnBorderR = 0xFF, btnBorderG = 0xFF, btnBorderB = 0xFF, btnBorderA = 200;
@@ -338,17 +338,17 @@ void PAGridRenderer::DrawButtons(BYTE* pBits, int width, int height,
         RECT rcFS = { currentX, btnY, currentX + fsW, btnY + scaledBtnH };
         outBtnRects.rcBtnFullScreen = rcFS;
 
-        PA_FillRect(pBits, stride, height, rcFS.left, rcFS.top,
+        PM_FillRect(pBits, stride, height, rcFS.left, rcFS.top,
                     fsW, scaledBtnH, btnBgR, btnBgG, btnBgB, btnBgA);
 
         if (tabIndex == 0)
-            PA_DrawRect(pBits, stride, height, rcFS.left, rcFS.top, fsW, scaledBtnH,
+            PM_DrawRect(pBits, stride, height, rcFS.left, rcFS.top, fsW, scaledBtnH,
                         focusBorderR, focusBorderG, focusBorderB, focusBorderA, 2);
         else
-            PA_DrawRect(pBits, stride, height, rcFS.left, rcFS.top, fsW, scaledBtnH,
+            PM_DrawRect(pBits, stride, height, rcFS.left, rcFS.top, fsW, scaledBtnH,
                         btnBorderR, btnBorderG, btnBorderB, btnBorderA, 1);
 
-        PA_DrawTextOnBitmap(pBits, width, height, rcFS, fullScreenText,
+        PM_DrawTextOnBitmap(pBits, width, height, rcFS, fullScreenText,
                             RGB(255, 255, 255), BTN_FONT_SIZE, dpiScale);
 
         currentX += fsW + scaledMargin;
@@ -361,28 +361,28 @@ void PAGridRenderer::DrawButtons(BYTE* pBits, int width, int height,
     RECT rcClose = { currentX, btnY, currentX + scaledBtnW, btnY + scaledBtnH };
     outBtnRects.rcBtnClose = rcClose;
 
-    PA_FillRect(pBits, stride, height, rcClose.left, rcClose.top,
+    PM_FillRect(pBits, stride, height, rcClose.left, rcClose.top,
                 scaledBtnW, scaledBtnH, btnBgR, btnBgG, btnBgB, btnBgA);
 
     int closeFocusIdx = showFullScreenBtn ? 1 : 0;
     if (tabIndex == closeFocusIdx)
-        PA_DrawRect(pBits, stride, height, rcClose.left, rcClose.top, scaledBtnW, scaledBtnH,
+        PM_DrawRect(pBits, stride, height, rcClose.left, rcClose.top, scaledBtnW, scaledBtnH,
                     focusBorderR, focusBorderG, focusBorderB, focusBorderA, 2);
     else
-        PA_DrawRect(pBits, stride, height, rcClose.left, rcClose.top, scaledBtnW, scaledBtnH,
+        PM_DrawRect(pBits, stride, height, rcClose.left, rcClose.top, scaledBtnW, scaledBtnH,
                     btnBorderR, btnBorderG, btnBorderB, btnBorderA, 1);
 
-    PA_DrawTextOnBitmap(pBits, width, height, rcClose, closeText,
+    PM_DrawTextOnBitmap(pBits, width, height, rcClose, closeText,
                         RGB(255, 255, 255), BTN_FONT_SIZE, dpiScale);
 }
 
-void PAGridRenderer::DrawPaperOutline(BYTE* pBits, int width, int height,
-                                       const PA_WindowParams& params,
+void PMGridRenderer::DrawPaperOutline(BYTE* pBits, int width, int height,
+                                       const PM_WindowParams& params,
                                        float dpiScale,
                                        const POINT& paperOffset,
                                        int tabIndex,
                                        bool highContrast,
-                                       PAButtonRects& outBtnRects)
+                                       PMButtonRects& outBtnRects)
 {
     int stride = width * 4;
 
@@ -396,7 +396,7 @@ void PAGridRenderer::DrawPaperOutline(BYTE* pBits, int width, int height,
 #ifndef NDEBUG
     {
         wchar_t dbg[160];
-        swprintf_s(dbg, L"[PA] Paper: %.0fx%.0fmm => %dx%dpx, effectiveDPI=%.0f, scale=%.2f\n",
+        swprintf_s(dbg, L"[PM] Paper: %.0fx%.0fmm => %dx%dpx, effectiveDPI=%.0f, scale=%.2f\n",
                    widthMm, heightMm, paperW, paperH, realDpi, dpiScale);
         OutputDebugStringW(dbg);
     }
@@ -405,7 +405,7 @@ void PAGridRenderer::DrawPaperOutline(BYTE* pBits, int width, int height,
     int paperX = (width  - paperW) / 2 + paperOffset.x;
     int paperY = (height - paperH) / 2 + paperOffset.y;
 
-    PA_FillRect(pBits, stride, height, paperX, paperY, paperW, paperH,
+    PM_FillRect(pBits, stride, height, paperX, paperY, paperW, paperH,
                 0, 0, 0, 0x4C);
 
     BYTE borderR = 0xFF, borderG = 0xFF, borderB = 0xFF, borderA = 200;
@@ -413,7 +413,7 @@ void PAGridRenderer::DrawPaperOutline(BYTE* pBits, int width, int height,
     {
         borderR = 0xFF; borderG = 0x00; borderB = 0x00; borderA = 255;
     }
-    PA_DrawRect(pBits, stride, height, paperX, paperY, paperW, paperH,
+    PM_DrawRect(pBits, stride, height, paperX, paperY, paperW, paperH,
                 borderR, borderG, borderB, borderA, 2);
 
     int scaledBtnW = (int)(BTN_WIDTH * dpiScale);
@@ -425,16 +425,16 @@ void PAGridRenderer::DrawPaperOutline(BYTE* pBits, int width, int height,
                 false, tabIndex, highContrast, dpiScale, outBtnRects);
 }
 
-void PAGridRenderer::DrawFullScreenGrid(BYTE* pBits, int width, int height,
-                                         const PA_WindowParams& params,
+void PMGridRenderer::DrawFullScreenGrid(BYTE* pBits, int width, int height,
+                                         const PM_WindowParams& params,
                                          float dpiScale,
                                          int tabIndex,
                                          bool highContrast,
-                                         PAButtonRects& outBtnRects)
+                                         PMButtonRects& outBtnRects)
 {
     int stride = width * 4;
 
-    PA_FillRect(pBits, stride, height, 0, 0, width, height, 0, 0, 0, 0x4C);
+    PM_FillRect(pBits, stride, height, 0, 0, width, height, 0, 0, 0, 0x4C);
 
     BYTE lineR, lineG, lineB, lineA;
     if (highContrast)
@@ -460,14 +460,14 @@ void PAGridRenderer::DrawFullScreenGrid(BYTE* pBits, int width, int height,
     {
         int ix = (int)(x + 0.5);
         if (ix >= 0 && ix < width)
-            PA_DrawVLine(pBits, stride, height, ix, 0, height, lineR, lineG, lineB, lineA);
+            PM_DrawVLine(pBits, stride, height, ix, 0, height, lineR, lineG, lineB, lineA);
     }
 
     for (double y = 0; y < height; y += gridSpacingY)
     {
         int iy = (int)(y + 0.5);
         if (iy >= 0 && iy < height)
-            PA_DrawHLine(pBits, stride, height, 0, iy, width, lineR, lineG, lineB, lineA);
+            PM_DrawHLine(pBits, stride, height, 0, iy, width, lineR, lineG, lineB, lineA);
     }
 
     int scaledBtnW = (int)(BTN_WIDTH * dpiScale);
@@ -481,15 +481,15 @@ void PAGridRenderer::DrawFullScreenGrid(BYTE* pBits, int width, int height,
                 true, tabIndex, highContrast, dpiScale, outBtnRects);
 }
 
-HBITMAP PAGridRenderer::Render(HDC hdc,
-                                const PA_WindowParams& params,
+HBITMAP PMGridRenderer::Render(HDC hdc,
+                                const PM_WindowParams& params,
                                 int windowWidth,
                                 int windowHeight,
                                 float dpiScale,
                                 const POINT& paperOffset,
                                 int tabIndex,
                                 bool highContrast,
-                                PAButtonRects& outBtnRects)
+                                PMButtonRects& outBtnRects)
 {
     BITMAPINFO bmi = {};
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);

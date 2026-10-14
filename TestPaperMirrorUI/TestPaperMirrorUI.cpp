@@ -1,9 +1,9 @@
-// TestPriAssistantUI.cpp : PrintAssistant overlay window UI test harness.
-// Dynamically loads PrintAssistant.dll and exercises PA_OpenWindow
+// TestPaperMirrorUI.cpp : PaperMirror overlay window UI test harness.
+// Dynamically loads PaperMirror.dll and exercises PM_OpenWindow
 // for every built-in paper / grid type plus a custom-size path.
 
 #include "framework.h"
-#include "TestPriAssistantUI.h"
+#include "TestPaperMirrorUI.h"
 
 #define MAX_LOADSTRING 100
 
@@ -25,20 +25,20 @@
 #define IDC_EDIT_HEIGHT     1015
 #define IDC_STATUS_LABEL    1016
 
-// ── PA_PaperType constants (mirrors PrintAssitWndApi.h) ──────────────────────
-#define PA_PAPER_A4             0
-#define PA_PAPER_A3             1
-#define PA_PAPER_A5             2
-#define PA_PAPER_B5             3
-#define PA_PAPER_LETTER         4
-#define PA_PAPER_LEGAL          5
-#define PA_PAPER_GRID_5MM       100
-#define PA_PAPER_GRID_1CM       101
-#define PA_PAPER_GRID_2CM       102
-#define PA_PAPER_GRID_1IN       103
-#define PA_PAPER_CUSTOM_OUTLINE 200
+// ── PM_PaperType constants (mirrors PaperMirrorApi.h) ──────────────────────
+#define PM_PAPER_A4             0
+#define PM_PAPER_A3             1
+#define PM_PAPER_A5             2
+#define PM_PAPER_B5             3
+#define PM_PAPER_LETTER         4
+#define PM_PAPER_LEGAL          5
+#define PM_PAPER_GRID_5MM       100
+#define PM_PAPER_GRID_1CM       101
+#define PM_PAPER_GRID_2CM       102
+#define PM_PAPER_GRID_1IN       103
+#define PM_PAPER_CUSTOM_OUTLINE 200
 
-struct PA_WindowParams {
+struct PM_WindowParams {
     int    paperType;
     int    language;
     double paperWidthMm;
@@ -46,11 +46,11 @@ struct PA_WindowParams {
 };
 
 // ── Function-pointer typedefs ────────────────────────────────────────────────
-typedef int  (*PFN_PA_Initialize)();
-typedef void (*PFN_PA_Uninitialize)();
-typedef int  (*PFN_PA_OpenWindow)(const PA_WindowParams*);
-typedef int  (*PFN_PA_CloseWindow)();
-typedef void (*PFN_PA_SetLanguage)(int);
+typedef int  (*PFN_PM_Initialize)();
+typedef void (*PFN_PM_Uninitialize)();
+typedef int  (*PFN_PM_OpenWindow)(const PM_WindowParams*);
+typedef int  (*PFN_PM_CloseWindow)();
+typedef void (*PFN_PM_SetLanguage)(int);
 
 // ── Globals ──────────────────────────────────────────────────────────────────
 HINSTANCE hInst;
@@ -58,14 +58,14 @@ WCHAR szTitle[MAX_LOADSTRING];
 WCHAR szWindowClass[MAX_LOADSTRING];
 
 HMODULE             g_hDll            = nullptr;
-PFN_PA_Initialize   g_PA_Initialize   = nullptr;
-PFN_PA_Uninitialize g_PA_Uninitialize = nullptr;
-PFN_PA_OpenWindow   g_PA_OpenWindow   = nullptr;
-PFN_PA_CloseWindow  g_PA_CloseWindow  = nullptr;
-PFN_PA_SetLanguage  g_PA_SetLanguage  = nullptr;
+PFN_PM_Initialize   g_PM_Initialize   = nullptr;
+PFN_PM_Uninitialize g_PM_Uninitialize = nullptr;
+PFN_PM_OpenWindow   g_PM_OpenWindow   = nullptr;
+PFN_PM_CloseWindow  g_PM_CloseWindow  = nullptr;
+PFN_PM_SetLanguage  g_PM_SetLanguage  = nullptr;
 
 HWND g_hStatus   = nullptr;
-int  g_currentLang = 0; // PA_LANG_EN
+int  g_currentLang = 0; // PM_LANG_EN
 
 struct LangEntry { const wchar_t* name; int value; };
 static const LangEntry g_langs[] = {
@@ -96,11 +96,11 @@ static void SetStatus(const wchar_t* msg)
 static bool LoadDll()
 {
     static const char* paths[] = {
-        "PrintAssistant.dll",
-        "..\\x64\\Debug\\PrintAssistant.dll",
-        "..\\x64\\Release\\PrintAssistant.dll",
-        "..\\Debug\\PrintAssistant.dll",
-        "..\\Release\\PrintAssistant.dll",
+        "PaperMirror.dll",
+        "..\\x64\\Debug\\PaperMirror.dll",
+        "..\\x64\\Release\\PaperMirror.dll",
+        "..\\Debug\\PaperMirror.dll",
+        "..\\Release\\PaperMirror.dll",
     };
     for (auto p : paths) {
         g_hDll = LoadLibraryA(p);
@@ -108,20 +108,20 @@ static bool LoadDll()
     }
     if (!g_hDll) return false;
 
-    g_PA_Initialize   = (PFN_PA_Initialize)  GetProcAddress(g_hDll, "PA_Initialize");
-    g_PA_Uninitialize = (PFN_PA_Uninitialize) GetProcAddress(g_hDll, "PA_Uninitialize");
-    g_PA_OpenWindow   = (PFN_PA_OpenWindow)   GetProcAddress(g_hDll, "PA_OpenWindow");
-    g_PA_CloseWindow  = (PFN_PA_CloseWindow)  GetProcAddress(g_hDll, "PA_CloseWindow");
-    g_PA_SetLanguage  = (PFN_PA_SetLanguage)  GetProcAddress(g_hDll, "PA_SetLanguage");
+    g_PM_Initialize   = (PFN_PM_Initialize)  GetProcAddress(g_hDll, "PM_Initialize");
+    g_PM_Uninitialize = (PFN_PM_Uninitialize) GetProcAddress(g_hDll, "PM_Uninitialize");
+    g_PM_OpenWindow   = (PFN_PM_OpenWindow)   GetProcAddress(g_hDll, "PM_OpenWindow");
+    g_PM_CloseWindow  = (PFN_PM_CloseWindow)  GetProcAddress(g_hDll, "PM_CloseWindow");
+    g_PM_SetLanguage  = (PFN_PM_SetLanguage)  GetProcAddress(g_hDll, "PM_SetLanguage");
 
-    return g_PA_Initialize && g_PA_OpenWindow && g_PA_CloseWindow;
+    return g_PM_Initialize && g_PM_OpenWindow && g_PM_CloseWindow;
 }
 
 static void OpenPaper(int paperType, double widthMm = 0.0, double heightMm = 0.0)
 {
-    if (!g_PA_OpenWindow) { SetStatus(L"DLL 未加载"); return; }
-    PA_WindowParams p = { paperType, g_currentLang, widthMm, heightMm };
-    int ret = g_PA_OpenWindow(&p);
+    if (!g_PM_OpenWindow) { SetStatus(L"DLL 未加载"); return; }
+    PM_WindowParams p = { paperType, g_currentLang, widthMm, heightMm };
+    int ret = g_PM_OpenWindow(&p);
     if (ret == 0) {
         SetStatus(L"叠加窗口已打开");
     } else {
@@ -222,10 +222,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = WndProc;
     wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TESTPRIASSISTANTUI));
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TESTPAPERMIRRORUI));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_TESTPRIASSISTANTUI);
+    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_TESTPAPERMIRRORUI);
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
     return RegisterClassExW(&wcex);
@@ -234,7 +234,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance;
-    HWND hWnd = CreateWindowW(szWindowClass, L"PrintAssistant UI 测试",
+    HWND hWnd = CreateWindowW(szWindowClass, L"PaperMirror UI 测试",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, 0, 560, 450, nullptr, nullptr, hInstance, nullptr);
     if (!hWnd) return FALSE;
@@ -250,10 +250,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         CreateControls(hWnd);
         if (!LoadDll()) {
-            SetStatus(L"PrintAssistant.dll 加载失败！请确认 DLL 路径。");
+            SetStatus(L"PaperMirror.dll 加载失败！请确认 DLL 路径。");
         } else {
-            int r = g_PA_Initialize();
-            SetStatus(r == 0 ? L"就绪 — DLL 已初始化" : L"PA_Initialize 返回错误");
+            int r = g_PM_Initialize();
+            SetStatus(r == 0 ? L"就绪 — DLL 已初始化" : L"PM_Initialize 返回错误");
         }
         return 0;
 
@@ -265,23 +265,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             int sel = (int)SendMessageW((HWND)lParam, CB_GETCURSEL, 0, 0);
             if (sel >= 0 && sel < ARRAYSIZE(g_langs)) {
                 g_currentLang = g_langs[sel].value;
-                if (g_PA_SetLanguage) g_PA_SetLanguage(g_currentLang);
+                if (g_PM_SetLanguage) g_PM_SetLanguage(g_currentLang);
             }
             return 0;
         }
 
         switch (id)
         {
-        case IDC_BTN_A4:       OpenPaper(PA_PAPER_A4);       break;
-        case IDC_BTN_A3:       OpenPaper(PA_PAPER_A3);       break;
-        case IDC_BTN_A5:       OpenPaper(PA_PAPER_A5);       break;
-        case IDC_BTN_B5:       OpenPaper(PA_PAPER_B5);       break;
-        case IDC_BTN_LETTER:   OpenPaper(PA_PAPER_LETTER);   break;
-        case IDC_BTN_LEGAL:    OpenPaper(PA_PAPER_LEGAL);    break;
-        case IDC_BTN_GRID_5MM: OpenPaper(PA_PAPER_GRID_5MM); break;
-        case IDC_BTN_GRID_1CM: OpenPaper(PA_PAPER_GRID_1CM); break;
-        case IDC_BTN_GRID_2CM: OpenPaper(PA_PAPER_GRID_2CM); break;
-        case IDC_BTN_GRID_1IN: OpenPaper(PA_PAPER_GRID_1IN); break;
+        case IDC_BTN_A4:       OpenPaper(PM_PAPER_A4);       break;
+        case IDC_BTN_A3:       OpenPaper(PM_PAPER_A3);       break;
+        case IDC_BTN_A5:       OpenPaper(PM_PAPER_A5);       break;
+        case IDC_BTN_B5:       OpenPaper(PM_PAPER_B5);       break;
+        case IDC_BTN_LETTER:   OpenPaper(PM_PAPER_LETTER);   break;
+        case IDC_BTN_LEGAL:    OpenPaper(PM_PAPER_LEGAL);    break;
+        case IDC_BTN_GRID_5MM: OpenPaper(PM_PAPER_GRID_5MM); break;
+        case IDC_BTN_GRID_1CM: OpenPaper(PM_PAPER_GRID_1CM); break;
+        case IDC_BTN_GRID_2CM: OpenPaper(PM_PAPER_GRID_2CM); break;
+        case IDC_BTN_GRID_1IN: OpenPaper(PM_PAPER_GRID_1IN); break;
         case IDC_BTN_CUSTOM:
         {
             wchar_t wb[32] = {}, hb[32] = {};
@@ -289,11 +289,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             GetDlgItemTextW(hWnd, IDC_EDIT_HEIGHT, hb, 32);
             double w = _wtof(wb), h = _wtof(hb);
             if (w <= 0 || h <= 0) { SetStatus(L"请输入有效的宽度和高度 (mm)"); break; }
-            OpenPaper(PA_PAPER_CUSTOM_OUTLINE, w, h);
+            OpenPaper(PM_PAPER_CUSTOM_OUTLINE, w, h);
             break;
         }
         case IDC_BTN_CLOSE:
-            if (g_PA_CloseWindow) { g_PA_CloseWindow(); SetStatus(L"叠加窗口已关闭"); }
+            if (g_PM_CloseWindow) { g_PM_CloseWindow(); SetStatus(L"叠加窗口已关闭"); }
             break;
         case IDM_ABOUT:
             DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
@@ -308,7 +308,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     case WM_DESTROY:
-        if (g_PA_Uninitialize) g_PA_Uninitialize();
+        if (g_PM_Uninitialize) g_PM_Uninitialize();
         if (g_hDll) { FreeLibrary(g_hDll); g_hDll = nullptr; }
         PostQuitMessage(0);
         return 0;
@@ -344,13 +344,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_TESTPRIASSISTANTUI, szWindowClass, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_TESTPAPERMIRRORUI, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
     if (!InitInstance(hInstance, nCmdShow))
         return FALSE;
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TESTPRIASSISTANTUI));
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TESTPAPERMIRRORUI));
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0)) {
         if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {

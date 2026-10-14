@@ -1,16 +1,16 @@
 #include "pch.h"
-#include "PAUIThread.h"
-#include "PAOverlayWindow.h"
-#include "PALanguage.h"
-#include "PAMonitorRegistry.h"
+#include "PMUIThread.h"
+#include "PMOverlayWindow.h"
+#include "PMLanguage.h"
+#include "PMMonitorRegistry.h"
 
-PAUIThread& PAUIThread::GetInstance()
+PMUIThread& PMUIThread::GetInstance()
 {
-    static PAUIThread instance;
+    static PMUIThread instance;
     return instance;
 }
 
-PAUIThread::PAUIThread()
+PMUIThread::PMUIThread()
     : m_hThread(NULL)
     , m_dwThreadId(0)
     , m_hMsgWnd(NULL)
@@ -20,23 +20,23 @@ PAUIThread::PAUIThread()
 {
 }
 
-PAUIThread::~PAUIThread()
+PMUIThread::~PMUIThread()
 {
     Uninitialize();
 }
 
-PA_WindowParams* PAUIThread::CopyParams(const PA_WindowParams* params)
+PM_WindowParams* PMUIThread::CopyParams(const PM_WindowParams* params)
 {
     if (!params) return nullptr;
-    return new PA_WindowParams(*params);
+    return new PM_WindowParams(*params);
 }
 
-static void FreeParams(PA_WindowParams* params)
+static void FreeParams(PM_WindowParams* params)
 {
     delete params;
 }
 
-int PAUIThread::Initialize()
+int PMUIThread::Initialize()
 {
     if (m_bInitialized.load())
         return 0;
@@ -61,13 +61,13 @@ int PAUIThread::Initialize()
     return 0;
 }
 
-void PAUIThread::Uninitialize()
+void PMUIThread::Uninitialize()
 {
     if (!m_bInitialized.load())
         return;
 
     if (m_hMsgWnd && IsWindow(m_hMsgWnd))
-        PostMessageW(m_hMsgWnd, WM_PA_QUIT, 0, 0);
+        PostMessageW(m_hMsgWnd, WM_PM_QUIT, 0, 0);
 
     if (m_hThread)
     {
@@ -82,40 +82,40 @@ void PAUIThread::Uninitialize()
     m_bInitialized.store(false);
 }
 
-void PAUIThread::PostOpen(const PA_WindowParams* params)
+void PMUIThread::PostOpen(const PM_WindowParams* params)
 {
     if (!m_hMsgWnd) return;
-    PA_WindowParams* copy = CopyParams(params);
-    PostMessageW(m_hMsgWnd, WM_PA_OPEN, 0, reinterpret_cast<LPARAM>(copy));
+    PM_WindowParams* copy = CopyParams(params);
+    PostMessageW(m_hMsgWnd, WM_PM_OPEN, 0, reinterpret_cast<LPARAM>(copy));
 }
 
-void PAUIThread::PostModify(const PA_WindowParams* params)
+void PMUIThread::PostModify(const PM_WindowParams* params)
 {
     if (!m_hMsgWnd) return;
-    PA_WindowParams* copy = CopyParams(params);
-    PostMessageW(m_hMsgWnd, WM_PA_MODIFY, 0, reinterpret_cast<LPARAM>(copy));
+    PM_WindowParams* copy = CopyParams(params);
+    PostMessageW(m_hMsgWnd, WM_PM_MODIFY, 0, reinterpret_cast<LPARAM>(copy));
 }
 
-void PAUIThread::PostClose()
+void PMUIThread::PostClose()
 {
     if (!m_hMsgWnd) return;
-    PostMessageW(m_hMsgWnd, WM_PA_CLOSE, 0, 0);
+    PostMessageW(m_hMsgWnd, WM_PM_CLOSE, 0, 0);
 }
 
-void PAUIThread::PostSetLanguage(PA_Language language)
+void PMUIThread::PostSetLanguage(PM_Language language)
 {
     if (!m_hMsgWnd) return;
-    PostMessageW(m_hMsgWnd, WM_PA_SETLANG, static_cast<WPARAM>(language), 0);
+    PostMessageW(m_hMsgWnd, WM_PM_SETLANG, static_cast<WPARAM>(language), 0);
 }
 
-DWORD WINAPI PAUIThread::UIThreadProc(LPVOID lpParam)
+DWORD WINAPI PMUIThread::UIThreadProc(LPVOID lpParam)
 {
-    PAUIThread* pThis = reinterpret_cast<PAUIThread*>(lpParam);
+    PMUIThread* pThis = reinterpret_cast<PMUIThread*>(lpParam);
     pThis->RunMessageLoop();
     return 0;
 }
 
-void PAUIThread::RunMessageLoop()
+void PMUIThread::RunMessageLoop()
 {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
@@ -135,16 +135,16 @@ void PAUIThread::RunMessageLoop()
     wcWatch.lpszClassName = MONITOR_WATCH_CLASS;
     RegisterClassExW(&wcWatch);
 
-    PAOverlayWindow::RegisterWindowClass(hInst);
+    PMOverlayWindow::RegisterWindowClass(hInst);
 
-    m_hMsgWnd = CreateWindowExW(0, MSG_WND_CLASS, L"PAMsgWindow", 0,
+    m_hMsgWnd = CreateWindowExW(0, MSG_WND_CLASS, L"PMMsgWindow", 0,
                                  0, 0, 0, 0, HWND_MESSAGE, NULL, hInst, this);
 
     m_hMonitorWatchWnd = CreateWindowExW(WS_EX_TOOLWINDOW,
-                                          MONITOR_WATCH_CLASS, L"PAMonitorWatch", WS_POPUP,
+                                          MONITOR_WATCH_CLASS, L"PMMonitorWatch", WS_POPUP,
                                           0, 0, 0, 0, NULL, NULL, hInst, this);
 
-    PAMonitorRegistry::GetInstance().Refresh();
+    PMMonitorRegistry::GetInstance().Refresh();
 
     if (m_hReadyEvent)
         SetEvent(m_hReadyEvent);
@@ -157,46 +157,46 @@ void PAUIThread::RunMessageLoop()
     }
 }
 
-LRESULT CALLBACK PAUIThread::MsgWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PMUIThread::MsgWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    PAUIThread* pThis = nullptr;
+    PMUIThread* pThis = nullptr;
 
     if (msg == WM_NCCREATE)
     {
         CREATESTRUCTW* pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
-        pThis = reinterpret_cast<PAUIThread*>(pCreate->lpCreateParams);
+        pThis = reinterpret_cast<PMUIThread*>(pCreate->lpCreateParams);
         SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
     }
     else
     {
-        pThis = reinterpret_cast<PAUIThread*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        pThis = reinterpret_cast<PMUIThread*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
     }
 
     if (pThis)
     {
         switch (msg)
         {
-        case WM_PA_OPEN:
+        case WM_PM_OPEN:
         {
-            PA_WindowParams* params = reinterpret_cast<PA_WindowParams*>(lParam);
+            PM_WindowParams* params = reinterpret_cast<PM_WindowParams*>(lParam);
             pThis->HandleOpen(params);
             FreeParams(params);
             return 0;
         }
-        case WM_PA_MODIFY:
+        case WM_PM_MODIFY:
         {
-            PA_WindowParams* params = reinterpret_cast<PA_WindowParams*>(lParam);
+            PM_WindowParams* params = reinterpret_cast<PM_WindowParams*>(lParam);
             pThis->HandleModify(params);
             FreeParams(params);
             return 0;
         }
-        case WM_PA_CLOSE:
+        case WM_PM_CLOSE:
             pThis->HandleClose();
             return 0;
-        case WM_PA_SETLANG:
-            pThis->HandleSetLanguage(static_cast<PA_Language>(wParam));
+        case WM_PM_SETLANG:
+            pThis->HandleSetLanguage(static_cast<PM_Language>(wParam));
             return 0;
-        case WM_PA_QUIT:
+        case WM_PM_QUIT:
         {
             pThis->HandleClose();
             if (pThis->m_hMonitorWatchWnd)
@@ -214,19 +214,19 @@ LRESULT CALLBACK PAUIThread::MsgWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK PAUIThread::MonitorWatchProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PMUIThread::MonitorWatchProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    PAUIThread* pThis = nullptr;
+    PMUIThread* pThis = nullptr;
 
     if (msg == WM_NCCREATE)
     {
         CREATESTRUCTW* pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
-        pThis = reinterpret_cast<PAUIThread*>(pCreate->lpCreateParams);
+        pThis = reinterpret_cast<PMUIThread*>(pCreate->lpCreateParams);
         SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
     }
     else
     {
-        pThis = reinterpret_cast<PAUIThread*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        pThis = reinterpret_cast<PMUIThread*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
     }
 
     if (pThis && msg == WM_DISPLAYCHANGE)
@@ -238,51 +238,51 @@ LRESULT CALLBACK PAUIThread::MonitorWatchProc(HWND hWnd, UINT msg, WPARAM wParam
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-void PAUIThread::HandleOpen(PA_WindowParams* params)
+void PMUIThread::HandleOpen(PM_WindowParams* params)
 {
     if (!params) return;
 
-    PAWindowRegistry::GetInstance().CloseAndClear();
+    PMWindowRegistry::GetInstance().CloseAndClear();
 
-    PAMonitorEntry entry;
-    if (!PAMonitorRegistry::GetInstance().GetPrimaryEntry(&entry))
+    PMMonitorEntry entry;
+    if (!PMMonitorRegistry::GetInstance().GetPrimaryEntry(&entry))
         return;
 
-    PAOverlayWindow* pWnd = new PAOverlayWindow();
+    PMOverlayWindow* pWnd = new PMOverlayWindow();
     if (pWnd->Create(*params, entry))
-        PAWindowRegistry::GetInstance().Set(pWnd);
+        PMWindowRegistry::GetInstance().Set(pWnd);
     else
         delete pWnd;
 }
 
-void PAUIThread::HandleModify(PA_WindowParams* params)
+void PMUIThread::HandleModify(PM_WindowParams* params)
 {
     if (!params) return;
 
-    PAOverlayWindow* pWnd = PAWindowRegistry::GetInstance().Get();
+    PMOverlayWindow* pWnd = PMWindowRegistry::GetInstance().Get();
     if (pWnd)
         pWnd->Modify(*params);
 }
 
-void PAUIThread::HandleClose()
+void PMUIThread::HandleClose()
 {
-    PAWindowRegistry::GetInstance().CloseAndClear();
+    PMWindowRegistry::GetInstance().CloseAndClear();
 }
 
-void PAUIThread::HandleSetLanguage(PA_Language language)
+void PMUIThread::HandleSetLanguage(PM_Language language)
 {
-    PALanguage::GetInstance().SetLanguage(language);
+    PMLanguage::GetInstance().SetLanguage(language);
 
-    PAOverlayWindow* pWnd = PAWindowRegistry::GetInstance().Get();
+    PMOverlayWindow* pWnd = PMWindowRegistry::GetInstance().Get();
     if (pWnd && pWnd->GetHWND())
         pWnd->Render();
 }
 
-void PAUIThread::HandleDisplayChanged()
+void PMUIThread::HandleDisplayChanged()
 {
-    PAMonitorRegistry::GetInstance().Refresh();
+    PMMonitorRegistry::GetInstance().Refresh();
 
-    PAOverlayWindow* pWnd = PAWindowRegistry::GetInstance().Get();
+    PMOverlayWindow* pWnd = PMWindowRegistry::GetInstance().Get();
     if (!pWnd || !pWnd->GetHWND())
         return;
 

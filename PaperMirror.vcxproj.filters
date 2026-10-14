@@ -21,25 +21,25 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PrintAssitWndApi.h">
+    <ClInclude Include="PaperMirrorApi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PADpiHelper.h">
+    <ClInclude Include="PMDpiHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PALanguage.h">
+    <ClInclude Include="PMLanguage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PAGridRenderer.h">
+    <ClInclude Include="PMGridRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PAOverlayWindow.h">
+    <ClInclude Include="PMOverlayWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PAUIThread.h">
+    <ClInclude Include="PMUIThread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PAMonitorRegistry.h">
+    <ClInclude Include="PMMonitorRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,25 +50,25 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PrintAssitWndApi.cpp">
+    <ClCompile Include="PaperMirrorApi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PADpiHelper.cpp">
+    <ClCompile Include="PMDpiHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PALanguage.cpp">
+    <ClCompile Include="PMLanguage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PAGridRenderer.cpp">
+    <ClCompile Include="PMGridRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PAOverlayWindow.cpp">
+    <ClCompile Include="PMOverlayWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PAUIThread.cpp">
+    <ClCompile Include="PMUIThread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PAMonitorRegistry.cpp">
+    <ClCompile Include="PMMonitorRegistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

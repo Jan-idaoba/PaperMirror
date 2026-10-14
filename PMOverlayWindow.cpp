@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "PAOverlayWindow.h"
-#include "PALanguage.h"
+#include "PMOverlayWindow.h"
+#include "PMLanguage.h"
 
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "shcore.lib")
@@ -12,18 +12,18 @@ static bool IsHighContrastEnabled()
     return (hc.dwFlags & HCF_HIGHCONTRASTON) != 0;
 }
 
-static PA_PaperType ToggleToOutline(PA_PaperType pt)
+static PM_PaperType ToggleToOutline(PM_PaperType pt)
 {
-    if (pt == PA_PAPER_CUSTOM_GRID)
-        return PA_PAPER_CUSTOM_OUTLINE;
-    return PA_PAPER_A4;
+    if (pt == PM_PAPER_CUSTOM_GRID)
+        return PM_PAPER_CUSTOM_OUTLINE;
+    return PM_PAPER_A4;
 }
 
 // ============================================================================
-// PAOverlayWindow
+// PMOverlayWindow
 // ============================================================================
 
-PAOverlayWindow::PAOverlayWindow()
+PMOverlayWindow::PMOverlayWindow()
     : m_hWnd(NULL)
     , m_params{}
     , m_entry{}
@@ -37,11 +37,11 @@ PAOverlayWindow::PAOverlayWindow()
 {
 }
 
-PAOverlayWindow::~PAOverlayWindow()
+PMOverlayWindow::~PMOverlayWindow()
 {
 }
 
-bool PAOverlayWindow::RegisterWindowClass(HINSTANCE hInstance)
+bool PMOverlayWindow::RegisterWindowClass(HINSTANCE hInstance)
 {
     WNDCLASSEXW wc = {};
     wc.cbSize        = sizeof(WNDCLASSEXW);
@@ -54,7 +54,7 @@ bool PAOverlayWindow::RegisterWindowClass(HINSTANCE hInstance)
     return RegisterClassExW(&wc) != 0 || GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
 }
 
-bool PAOverlayWindow::Create(const PA_WindowParams& params, const PAMonitorEntry& entry)
+bool PMOverlayWindow::Create(const PM_WindowParams& params, const PMMonitorEntry& entry)
 {
     m_params = params;
     m_entry  = entry;
@@ -76,7 +76,7 @@ bool PAOverlayWindow::Create(const PA_WindowParams& params, const PAMonitorEntry
     m_hWnd = CreateWindowExW(
         WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT,
         WINDOW_CLASS_NAME,
-        L"PrintAssistant",
+        L"PaperMirror",
         WS_POPUP,
         x, y, w, h,
         NULL, NULL, hInst, this);
@@ -95,14 +95,14 @@ bool PAOverlayWindow::Create(const PA_WindowParams& params, const PAMonitorEntry
     return true;
 }
 
-void PAOverlayWindow::Modify(const PA_WindowParams& params)
+void PMOverlayWindow::Modify(const PM_WindowParams& params)
 {
     m_params = params;
     m_ptPaperOffset = { 0, 0 };
     Render();
 }
 
-void PAOverlayWindow::AdaptToMonitor(HMONITOR hMon)
+void PMOverlayWindow::AdaptToMonitor(HMONITOR hMon)
 {
     if (!hMon || !m_hWnd) return;
     if (hMon == m_entry.hMonitor) return;
@@ -132,7 +132,7 @@ void PAOverlayWindow::AdaptToMonitor(HMONITOR hMon)
     Render();
 }
 
-void PAOverlayWindow::Close()
+void PMOverlayWindow::Close()
 {
     if (m_hWnd && IsWindow(m_hWnd))
     {
@@ -144,7 +144,7 @@ void PAOverlayWindow::Close()
     }
 }
 
-void PAOverlayWindow::Render()
+void PMOverlayWindow::Render()
 {
     if (!m_hWnd) return;
 
@@ -156,7 +156,7 @@ void PAOverlayWindow::Render()
     HDC hScreenDC = GetDC(NULL);
     HDC hMemDC = CreateCompatibleDC(hScreenDC);
 
-    HBITMAP hBitmap = PAGridRenderer::Render(
+    HBITMAP hBitmap = PMGridRenderer::Render(
         hMemDC, m_params, width, height,
         m_dpiScale, m_ptPaperOffset, m_iTabIndex,
         m_bHighContrast, m_btnRects);
@@ -183,9 +183,9 @@ void PAOverlayWindow::Render()
     ReleaseDC(NULL, hScreenDC);
 }
 
-bool PAOverlayWindow::IsPointInPaper(int x, int y) const
+bool PMOverlayWindow::IsPointInPaper(int x, int y) const
 {
-    if (PAGridRenderer::IsFullScreenMode(m_params.paperType))
+    if (PMGridRenderer::IsFullScreenMode(m_params.paperType))
         return true;
 
     RECT rc;
@@ -194,7 +194,7 @@ bool PAOverlayWindow::IsPointInPaper(int x, int y) const
     int height = rc.bottom - rc.top;
 
     double widthMm = 0, heightMm = 0;
-    PAGridRenderer::GetPaperSizeMm(m_params, &widthMm, &heightMm);
+    PMGridRenderer::GetPaperSizeMm(m_params, &widthMm, &heightMm);
 
     int paperW = (int)(widthMm * m_entry.dpiX / 25.4);
     int paperH = (int)(heightMm * m_entry.dpiY / 25.4);
@@ -205,13 +205,13 @@ bool PAOverlayWindow::IsPointInPaper(int x, int y) const
            y >= paperY && y < paperY + paperH;
 }
 
-bool PAOverlayWindow::IsPointInButton(int x, int y, const RECT& btnRect) const
+bool PMOverlayWindow::IsPointInButton(int x, int y, const RECT& btnRect) const
 {
     return x >= btnRect.left && x < btnRect.right &&
            y >= btnRect.top && y < btnRect.bottom;
 }
 
-void PAOverlayWindow::OnMouseDown(int x, int y)
+void PMOverlayWindow::OnMouseDown(int x, int y)
 {
     if (IsPointInButton(x, y, m_btnRects.rcBtnClose))
     {
@@ -219,7 +219,7 @@ void PAOverlayWindow::OnMouseDown(int x, int y)
         return;
     }
 
-    bool fullScreen = PAGridRenderer::IsFullScreenMode(m_params.paperType);
+    bool fullScreen = PMGridRenderer::IsFullScreenMode(m_params.paperType);
 
     if (fullScreen && IsPointInButton(x, y, m_btnRects.rcBtnFullScreen))
     {
@@ -238,7 +238,7 @@ void PAOverlayWindow::OnMouseDown(int x, int y)
     }
 }
 
-void PAOverlayWindow::OnMouseMove(int x, int y)
+void PMOverlayWindow::OnMouseMove(int x, int y)
 {
     if (m_bDragging)
     {
@@ -275,7 +275,7 @@ void PAOverlayWindow::OnMouseMove(int x, int y)
     }
 }
 
-void PAOverlayWindow::OnMouseUp()
+void PMOverlayWindow::OnMouseUp()
 {
     if (m_bDragging)
     {
@@ -284,9 +284,9 @@ void PAOverlayWindow::OnMouseUp()
     }
 }
 
-void PAOverlayWindow::OnKeyDown(WPARAM vk)
+void PMOverlayWindow::OnKeyDown(WPARAM vk)
 {
-    bool fullScreen = PAGridRenderer::IsFullScreenMode(m_params.paperType);
+    bool fullScreen = PMGridRenderer::IsFullScreenMode(m_params.paperType);
     int btnCount = fullScreen ? 2 : 1;
 
     if (vk == VK_TAB)
@@ -321,7 +321,7 @@ void PAOverlayWindow::OnKeyDown(WPARAM vk)
     }
 }
 
-void PAOverlayWindow::OnTimer(UINT_PTR nIDEvent)
+void PMOverlayWindow::OnTimer(UINT_PTR nIDEvent)
 {
     if (nIDEvent == TIMER_HIGH_CONTRAST)
     {
@@ -334,19 +334,19 @@ void PAOverlayWindow::OnTimer(UINT_PTR nIDEvent)
     }
 }
 
-LRESULT CALLBACK PAOverlayWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PMOverlayWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    PAOverlayWindow* pThis = nullptr;
+    PMOverlayWindow* pThis = nullptr;
 
     if (msg == WM_NCCREATE)
     {
         CREATESTRUCTW* pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam);
-        pThis = reinterpret_cast<PAOverlayWindow*>(pCreate->lpCreateParams);
+        pThis = reinterpret_cast<PMOverlayWindow*>(pCreate->lpCreateParams);
         SetWindowLongPtrW(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
     }
     else
     {
-        pThis = reinterpret_cast<PAOverlayWindow*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        pThis = reinterpret_cast<PMOverlayWindow*>(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
     }
 
     if (pThis)
@@ -389,7 +389,7 @@ LRESULT CALLBACK PAOverlayWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
             SetWindowLongPtrW(hWnd, GWLP_USERDATA, 0);
             pThis->m_hWnd = NULL;
             DestroyWindow(hWnd);
-            PAWindowRegistry::GetInstance().Clear();
+            PMWindowRegistry::GetInstance().Clear();
             return 0;
         }
 
@@ -402,30 +402,30 @@ LRESULT CALLBACK PAOverlayWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LP
 }
 
 // ============================================================================
-// PAWindowRegistry
+// PMWindowRegistry
 // ============================================================================
 
-PAWindowRegistry& PAWindowRegistry::GetInstance()
+PMWindowRegistry& PMWindowRegistry::GetInstance()
 {
-    static PAWindowRegistry instance;
+    static PMWindowRegistry instance;
     return instance;
 }
 
-PAOverlayWindow* PAWindowRegistry::Get()
+PMOverlayWindow* PMWindowRegistry::Get()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_window;
 }
 
-void PAWindowRegistry::Set(PAOverlayWindow* pWnd)
+void PMWindowRegistry::Set(PMOverlayWindow* pWnd)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_window = pWnd;
 }
 
-void PAWindowRegistry::CloseAndClear()
+void PMWindowRegistry::CloseAndClear()
 {
-    PAOverlayWindow* pWnd = nullptr;
+    PMOverlayWindow* pWnd = nullptr;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         pWnd = m_window;
@@ -438,7 +438,7 @@ void PAWindowRegistry::CloseAndClear()
     }
 }
 
-void PAWindowRegistry::Clear()
+void PMWindowRegistry::Clear()
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     delete m_window;
